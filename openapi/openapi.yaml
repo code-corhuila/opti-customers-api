@@ -1,0 +1,639 @@
+openapi: 3.0.3
+info:
+  title: OptiView customers API
+  version: 1.0.0
+  description: Patients and optical formulas. Errors use one envelope; creations are idempotent; listings are bounded.
+servers:
+- url: http://localhost:8000
+  description: Through the API gateway (development)
+security:
+- bearerAuth: []
+paths:
+  /api/v1/patients:
+    post:
+      summary: Register a patient
+      tags:
+      - patients
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201': &id001
+          description: Created; `Location` points to the new resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedResponse'
+        '200':
+          description: 'The Idempotency-Key was already used: the resource created the first time'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      description: 'Roles allowed: ADMIN, SELLER, OPTOMETRIST.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterPatientRequest'
+    get:
+      summary: Search patients (newest first)
+      tags:
+      - patients
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: q
+        in: query
+        schema:
+          type: string
+        description: Document number or name
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - CONTROL_OVERDUE
+          - INACTIVE
+      - name: controlDueBefore
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Patients whose last control is older than this date (used by the worker)
+      responses:
+        '200':
+          description: A page of patients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/v1/patients/{id}:
+    get:
+      summary: Get a patient
+      tags:
+      - patients
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - name: id
+        in: path
+        required: true
+        description: Resource identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The patient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/v1/patients/{id}/contact:
+    put:
+      summary: Update contact data
+      tags:
+      - patients
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - name: id
+        in: path
+        required: true
+        description: Resource identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The updated patient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      description: 'Roles allowed: ADMIN, SELLER, OPTOMETRIST.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactRequest'
+  /api/v1/patients/{id}/control-overdue:
+    post:
+      summary: Flag the patient with an overdue control (idempotent)
+      tags:
+      - patients
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - name: id
+        in: path
+        required: true
+        description: Resource identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The patient, flagged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      description: 'Roles allowed: ADMIN, SERVICE.'
+  /api/v1/patients/{id}/formulas:
+    post:
+      summary: Register an optical formula; it becomes the current one
+      tags:
+      - formulas
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - name: id
+        in: path
+        required: true
+        description: Resource identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201': *id001
+        '200':
+          description: 'The Idempotency-Key was already used: the resource created the first time'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      description: 'Roles allowed: ADMIN, OPTOMETRIST.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFormulaRequest'
+    get:
+      summary: Formula history of a patient (newest first)
+      tags:
+      - formulas
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: id
+        in: path
+        required: true
+        description: Resource identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: A page of formulas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormulaPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /api/v1/patients/{id}/formulas/current:
+    get:
+      summary: Current formula of a patient
+      tags:
+      - formulas
+      parameters:
+      - $ref: '#/components/parameters/CorrelationId'
+      - name: id
+        in: path
+        required: true
+        description: Resource identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The formula
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Formula'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /health:
+    get:
+      summary: Liveness
+      tags:
+      - health
+      security: []
+      responses:
+        '200':
+          description: UP
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT (RS256)
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - message
+      - traceId
+      properties:
+        error:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - NOT_FOUND
+          - INVALID_STATUS_TRANSITION
+          - BUSINESS_RULE_VIOLATION
+          - INTERNAL_ERROR
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        traceId:
+          type: string
+          description: The X-Correlation-Id of the request
+    ErrorDetail:
+      type: object
+      required:
+      - field
+      - message
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+    PageMeta:
+      type: object
+      required:
+      - page
+      - limit
+      - total
+      - totalPages
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    CreatedResponse:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          format: uuid
+    RegisterPatientRequest:
+      type: object
+      required:
+      - documentType
+      - documentNumber
+      - firstName
+      - lastName
+      - phone
+      - eps
+      properties:
+        documentType:
+          type: string
+          enum:
+          - CC
+          - CE
+          - TI
+          - PASSPORT
+        documentNumber:
+          type: string
+          pattern: ^[A-Za-z0-9]{5,20}$
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        phone:
+          type: string
+          pattern: ^\+?[0-9]{7,15}$
+        email:
+          type: string
+          format: email
+          maxLength: 160
+        eps:
+          type: string
+          minLength: 2
+          maxLength: 80
+        city:
+          type: string
+          maxLength: 80
+        birthDate:
+          type: string
+          format: date
+          description: Not in the future, not older than 120 years
+    UpdateContactRequest:
+      type: object
+      required:
+      - phone
+      - eps
+      properties:
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        eps:
+          type: string
+        city:
+          type: string
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentType:
+          type: string
+        documentNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        eps:
+          type: string
+        city:
+          type: string
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - CONTROL_OVERDUE
+          - INACTIVE
+        lastControlDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+    Eye:
+      type: object
+      properties:
+        sphere:
+          type: number
+          minimum: -20
+          maximum: 20
+          multipleOf: 0.25
+        cylinder:
+          type: number
+          minimum: -10
+          maximum: 10
+          multipleOf: 0.25
+        axis:
+          type: integer
+          minimum: 0
+          maximum: 180
+          description: Required when there is a cylinder
+        addition:
+          type: number
+          minimum: 0
+          maximum: 4
+          multipleOf: 0.25
+    AddFormulaRequest:
+      type: object
+      required:
+      - od
+      - oi
+      - pupillaryDistance
+      - lensType
+      - optometristName
+      - formulaDate
+      properties:
+        od:
+          $ref: '#/components/schemas/Eye'
+        oi:
+          $ref: '#/components/schemas/Eye'
+        pupillaryDistance:
+          type: number
+          minimum: 40
+          maximum: 80
+          description: mm
+        lensType:
+          type: string
+          enum:
+          - MONOFOCAL
+          - BIFOCAL
+          - PROGRESSIVE
+          - OCCUPATIONAL
+        optometristName:
+          type: string
+          minLength: 3
+          maxLength: 150
+        formulaDate:
+          type: string
+          format: date
+          description: Not in the future
+    Formula:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        od:
+          $ref: '#/components/schemas/Eye'
+        oi:
+          $ref: '#/components/schemas/Eye'
+        pupillaryDistance:
+          type: number
+        lensType:
+          type: string
+        optometristName:
+          type: string
+        formulaDate:
+          type: string
+          format: date
+        current:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    PatientPage:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Patient'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    FormulaPage:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Formula'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+      description: Same value on every retry of the same intention.
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 64
+  responses:
+    BadRequest:
+      description: 'VALIDATION_ERROR: invalid shape; `details` names each field'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 'UNAUTHORIZED: missing, invalid or expired token'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 'FORBIDDEN: valid token without permission'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 'NOT_FOUND: the resource or the route does not exist'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unprocessable:
+      description: INVALID_STATUS_TRANSITION or BUSINESS_RULE_VIOLATION
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
