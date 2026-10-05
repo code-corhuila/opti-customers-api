@@ -48,6 +48,22 @@ public final class Validation {
         return trimmed;
     }
 
+    public static String optionalMatching(String value, String field, Pattern pattern, String hint) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return matching(value, field, pattern, hint);
+    }
+
+    /** The value must be exactly one of a closed, parametrized list (for example a fixed EPS catalog). */
+    public static String oneOf(String value, String field, java.util.List<String> allowed) {
+        String trimmed = value == null ? "" : value.trim();
+        if (!allowed.contains(trimmed)) {
+            throw DomainException.validation(field, "must be one of: " + String.join(", ", allowed));
+        }
+        return trimmed;
+    }
+
     public static String optionalEmail(String value, String field) {
         if (value == null || value.isBlank()) {
             return null;
