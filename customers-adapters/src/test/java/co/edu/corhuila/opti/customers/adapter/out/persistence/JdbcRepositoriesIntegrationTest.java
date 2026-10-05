@@ -162,6 +162,21 @@ class JdbcRepositoriesIntegrationTest {
         assertThat(formulas.list(p.id(), PageQuery.first(10)).total()).isEqualTo(1);
     }
 
+    @Test
+    void summaryCountsTotalActiveAndPendingControls() {
+        Patient active = newPatient();
+        Patient overdue = newPatient();
+        patients.saveIdempotent(active, key());
+        patients.saveIdempotent(overdue, key());
+        patients.update(overdue.flagControlOverdue());
+
+        var summary = patients.summary();
+
+        assertThat(summary.total()).isGreaterThanOrEqualTo(2);
+        assertThat(summary.active()).isGreaterThanOrEqualTo(1);
+        assertThat(summary.pendingControls()).isGreaterThanOrEqualTo(1);
+    }
+
     private static Patient newPatient() {
         return Patient.register(UUID.randomUUID(), Fixtures.patient(String.valueOf(DOCUMENT.incrementAndGet())),
                 TODAY, Instant.now());

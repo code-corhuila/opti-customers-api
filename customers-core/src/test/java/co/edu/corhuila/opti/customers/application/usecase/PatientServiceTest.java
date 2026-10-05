@@ -191,6 +191,20 @@ class PatientServiceTest {
     }
 
     @Test
+    void summaryCountsTotalActiveAndPendingControls() {
+        service.register(Fixtures.validPatient(), KEY);
+        UUID overdueId = service.register(Fixtures.patient("1075243891"), "register-0002").value().id();
+        service.register(Fixtures.patient("1075243892"), "register-0003");
+        service.flagControlOverdue(overdueId);
+
+        var summary = service.summary();
+
+        assertThat(summary.total()).isEqualTo(3);
+        assertThat(summary.active()).isEqualTo(2);
+        assertThat(summary.pendingControls()).isEqualTo(1);
+    }
+
+    @Test
     void contactUpdateKeepsIdentityAndValidatesFields() {
         UUID id = service.register(Fixtures.validPatient(), KEY).value().id();
 
