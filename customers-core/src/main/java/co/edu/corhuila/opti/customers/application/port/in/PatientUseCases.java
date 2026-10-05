@@ -27,7 +27,14 @@ public interface PatientUseCases {
 
     PageResult<OpticalFormula> formulas(UUID patientId, PageQuery page);
 
+    /** Totals for the patients dashboard (HU-17). */
+    PatientSummary summary();
+
     /** Listing criteria; every field is optional. */
     record PatientFilter(String query, PatientStatus status, LocalDate controlDueBefore) {
+    }
+
+    /** {@code active} and {@code pendingControls} are subsets of {@code total}. */
+    record PatientSummary(long total, long active, long pendingControls) {
     }
 }

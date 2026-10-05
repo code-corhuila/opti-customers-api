@@ -271,6 +271,21 @@ class CustomersHttpTest {
         as(get("/api/v1/patients?status=UNKNOWN"), ADMIN).andExpect(status().isBadRequest());
     }
 
+    // ---- summary --------------------------------------------------------------------------
+
+    @Test
+    void summaryCountsTotalActiveAndPendingControls() throws Exception {
+        String id = idOf(as(create(patientJson(nextDocument()), "key-" + UUID.randomUUID()), ADMIN)
+                .andReturn().getResponse().getContentAsString());
+        as(post("/api/v1/patients/" + id + "/control-overdue"), "SERVICE").andExpect(status().isOk());
+
+        as(get("/api/v1/patients/summary"), ADMIN)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").isNumber())
+                .andExpect(jsonPath("$.active").isNumber())
+                .andExpect(jsonPath("$.pendingControls").isNumber());
+    }
+
     // ---- formulas -------------------------------------------------------------------------
 
     @Test
