@@ -301,7 +301,7 @@ class CustomersHttpTest {
 
         as(formula(patientId, """
                 {"od":{"sphere":-1.5,"cylinder":-0.75},"oi":{"sphere":-1.3,"axis":181},
-                 "pupillaryDistance":90,"lensType":"MONOFOCAL","optometristName":"Dra. Ana Torres",
+                 "pupillaryDistance":90,"lensType":"MONOFOCAL","optometristName":"Ana Torres",
                  "formulaDate":"2026-09-20"}""", "formula-" + UUID.randomUUID()), "OPTOMETRIST")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.details[*].field", hasItem("od.axis")))
@@ -317,7 +317,7 @@ class CustomersHttpTest {
 
         as(formula(patientId, """
                 {"od":{"sphere":-1.5,"cylinder":-0.75,"axis":90.5},"oi":{"sphere":-1.25},
-                 "pupillaryDistance":62,"lensType":"MONOFOCAL","optometristName":"Dra. Ana Torres",
+                 "pupillaryDistance":62,"lensType":"MONOFOCAL","optometristName":"Ana Torres",
                  "formulaDate":"2026-09-20"}""", "formula-" + UUID.randomUUID()), "OPTOMETRIST")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.details[*].field", hasItem("od.axis")));
@@ -356,14 +356,14 @@ class CustomersHttpTest {
     private static String patientJson(String document) {
         return """
                 {"documentType":"CC","documentNumber":"%s","firstName":"Laura Marcela","lastName":"Ortega Ruiz",
-                 "phone":"3104582291","email":"laura.ortega@gmail.com","eps":"Sanitas","city":"Neiva",
+                 "phone":"3104582291","email":"laura.ortega@gmail.com","eps":"EPS Sanitas","city":"Neiva",
                  "birthDate":"1990-05-20"}""".formatted(document);
     }
 
     private static String validFormulaJson() {
         return """
                 {"od":{"sphere":-1.5,"cylinder":-0.75,"axis":90},"oi":{"sphere":-1.25},
-                 "pupillaryDistance":62.5,"lensType":"MONOFOCAL","optometristName":"Dra. Ana Torres",
+                 "pupillaryDistance":62.5,"lensType":"MONOFOCAL","optometristName":"Ana Torres",
                  "formulaDate":"2026-09-20"}""";
     }
 

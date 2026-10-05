@@ -2,6 +2,7 @@ package co.edu.corhuila.opti.customers.domain.model;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,10 @@ public final class Patient {
 
     private static final Pattern DOCUMENT_NUMBER = Pattern.compile("^[A-Za-z0-9]{5,20}$");
     private static final Pattern PHONE = Pattern.compile("^\\+?[0-9]{7,15}$");
+    /** Letters (including accents and Ñ) and spaces only: no digits, no punctuation. */
+    private static final Pattern NAME = Pattern.compile("^[\\p{L} ]{2,100}$");
+    /** The EPS a patient can be registered under; a short, explicit catalog, not free text. */
+    private static final List<String> EPS_OPTIONS = List.of("Nueva EPS", "EPS Sanitas", "Pijaos Salud EPSI");
     private static final int MAX_AGE_YEARS = 120;
 
     private final UUID id;
@@ -53,8 +58,10 @@ public final class Patient {
         DocumentType type = v.check(() -> Validation.required(data.documentType(), "documentType"));
         String number = v.check(() -> Validation.matching(data.documentNumber(), "documentNumber",
                 DOCUMENT_NUMBER, "must have 5 to 20 letters or digits"));
-        String first = v.check(() -> Validation.text(data.firstName(), "firstName", 2, 100));
-        String last = v.check(() -> Validation.text(data.lastName(), "lastName", 2, 100));
+        String first = v.check(() -> Validation.matching(data.firstName(), "firstName", NAME,
+                "must have 2 to 100 letters, no numbers or special characters"));
+        String last = v.check(() -> Validation.matching(data.lastName(), "lastName", NAME,
+                "must have 2 to 100 letters, no numbers or special characters"));
         Contact contact = contact(v, data.phone(), data.email(), data.eps(), data.city());
         LocalDate birth = v.check(() -> validBirthDate(data.birthDate(), today));
         v.throwIfAny();
@@ -70,8 +77,9 @@ public final class Patient {
                 v.check(() -> Validation.matching(phone, "phone", PHONE,
                         "must have 7 to 15 digits, optionally starting with +")),
                 v.check(() -> Validation.optionalEmail(email, "email")),
-                v.check(() -> Validation.text(eps, "eps", 2, 80)),
-                v.check(() -> Validation.optionalText(city, "city", 80)));
+                v.check(() -> Validation.oneOf(eps, "eps", EPS_OPTIONS)),
+                v.check(() -> Validation.optionalMatching(city, "city", NAME,
+                        "must have only letters and spaces")));
     }
 
     public static Patient rehydrate(UUID id, DocumentType documentType, String documentNumber, String firstName,
