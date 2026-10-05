@@ -6,6 +6,7 @@ import java.util.UUID;
 import co.edu.corhuila.opti.customers.application.port.in.PageQuery;
 import co.edu.corhuila.opti.customers.application.port.in.PageResult;
 import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientFilter;
+import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientSummary;
 import co.edu.corhuila.opti.customers.domain.model.DocumentType;
 import co.edu.corhuila.opti.customers.domain.model.Patient;
 
@@ -28,4 +29,7 @@ public interface PatientRepository {
     PageResult<Patient> search(PatientFilter filter, PageQuery page);
 
     void update(Patient patient);
+
+    /** Totals used by the patients dashboard (HU-17). */
+    PatientSummary summary();
 }

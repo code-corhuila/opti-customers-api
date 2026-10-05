@@ -14,6 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import co.edu.corhuila.opti.customers.application.port.in.PageQuery;
 import co.edu.corhuila.opti.customers.application.port.in.PageResult;
 import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientFilter;
+import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientSummary;
 import co.edu.corhuila.opti.customers.application.port.out.Created;
 import co.edu.corhuila.opti.customers.application.port.out.PatientRepository;
 import co.edu.corhuila.opti.customers.domain.model.DocumentType;
@@ -109,6 +110,19 @@ public class JdbcPatientRepository implements PatientRepository {
                 .param("phone", p.phone()).param("email", p.email()).param("eps", p.eps()).param("city", p.city())
                 .param("status", p.status().name()).param("lastControl", p.lastControlDate()).param("id", p.id())
                 .update();
+    }
+
+    @Override
+    public PatientSummary summary() {
+        return jdbc.sql("""
+                SELECT count(*) AS total,
+                       count(*) FILTER (WHERE status = 'ACTIVE') AS active,
+                       count(*) FILTER (WHERE status = 'CONTROL_OVERDUE') AS pending
+                FROM patient
+                """)
+                .query((rs, row) -> new PatientSummary(rs.getLong("total"), rs.getLong("active"),
+                        rs.getLong("pending")))
+                .single();
     }
 
     private void insert(Patient p) {

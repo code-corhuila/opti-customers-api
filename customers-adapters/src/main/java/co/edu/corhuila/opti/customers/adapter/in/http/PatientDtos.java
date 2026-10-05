@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases;
 import co.edu.corhuila.opti.customers.domain.model.DocumentType;
 import co.edu.corhuila.opti.customers.domain.model.EyeMeasure;
 import co.edu.corhuila.opti.customers.domain.model.LensType;
@@ -66,6 +67,14 @@ final class PatientDtos {
             return new PatientResponse(p.id(), p.documentType(), p.documentNumber(), p.firstName(), p.lastName(),
                     p.fullName(), p.phone(), p.email(), p.eps(), p.city(), p.birthDate(), p.status(),
                     p.lastControlDate(), p.createdAt());
+        }
+    }
+
+    /** Totals shown on the patients dashboard (HU-17). */
+    record SummaryResponse(long total, long active, long pendingControls) {
+
+        static SummaryResponse from(PatientUseCases.PatientSummary s) {
+            return new SummaryResponse(s.total(), s.active(), s.pendingControls());
         }
     }
 

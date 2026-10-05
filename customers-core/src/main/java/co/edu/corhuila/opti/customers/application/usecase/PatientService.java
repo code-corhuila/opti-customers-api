@@ -8,6 +8,7 @@ import java.util.UUID;
 import co.edu.corhuila.opti.customers.application.port.in.PageQuery;
 import co.edu.corhuila.opti.customers.application.port.in.PageResult;
 import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases;
+import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientSummary;
 import co.edu.corhuila.opti.customers.application.port.out.Created;
 import co.edu.corhuila.opti.customers.application.port.out.FormulaRepository;
 import co.edu.corhuila.opti.customers.application.port.out.IdGenerator;
@@ -77,6 +78,11 @@ public class PatientService implements PatientUseCases {
         Patient flagged = get(id).flagControlOverdue();
         patients.update(flagged);
         return flagged;
+    }
+
+    @Override
+    public PatientSummary summary() {
+        return patients.summary();
     }
 
     @Override

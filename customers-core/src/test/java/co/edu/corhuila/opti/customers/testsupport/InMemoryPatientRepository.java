@@ -11,10 +11,12 @@ import java.util.UUID;
 import co.edu.corhuila.opti.customers.application.port.in.PageQuery;
 import co.edu.corhuila.opti.customers.application.port.in.PageResult;
 import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientFilter;
+import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientSummary;
 import co.edu.corhuila.opti.customers.application.port.out.Created;
 import co.edu.corhuila.opti.customers.application.port.out.PatientRepository;
 import co.edu.corhuila.opti.customers.domain.model.DocumentType;
 import co.edu.corhuila.opti.customers.domain.model.Patient;
+import co.edu.corhuila.opti.customers.domain.model.PatientStatus;
 
 /** Fake of the patient store, used to test the core and the HTTP adapter without a database. */
 public class InMemoryPatientRepository implements PatientRepository {
@@ -65,6 +67,13 @@ public class InMemoryPatientRepository implements PatientRepository {
     @Override
     public void update(Patient patient) {
         byId.put(patient.id(), patient);
+    }
+
+    @Override
+    public PatientSummary summary() {
+        long active = byId.values().stream().filter(p -> p.status() == PatientStatus.ACTIVE).count();
+        long pending = byId.values().stream().filter(p -> p.status() == PatientStatus.CONTROL_OVERDUE).count();
+        return new PatientSummary(byId.size(), active, pending);
     }
 
     private static boolean matches(Patient p, String query) {
