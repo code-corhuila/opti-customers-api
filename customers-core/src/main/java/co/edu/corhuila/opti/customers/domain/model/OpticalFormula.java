@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * An optical prescription of a patient. Only one formula per patient is current; registering a
@@ -13,6 +14,8 @@ public final class OpticalFormula {
 
     private static final BigDecimal MIN_PD = new BigDecimal("40");
     private static final BigDecimal MAX_PD = new BigDecimal("80");
+    /** Letters (including accents and Ñ) and spaces only: no digits, no punctuation. */
+    private static final Pattern NAME = Pattern.compile("^[\\p{L} ]{3,150}$");
 
     private final UUID id;
     private final UUID patientId;
@@ -46,7 +49,8 @@ public final class OpticalFormula {
         EyeMeasure oi = v.check(() -> eye("oi", data.oi()));
         BigDecimal pd = v.check(() -> pupillaryDistance(data.pupillaryDistance()));
         LensType lensType = v.check(() -> Validation.required(data.lensType(), "lensType"));
-        String optometrist = v.check(() -> Validation.text(data.optometristName(), "optometristName", 3, 150));
+        String optometrist = v.check(() -> Validation.matching(data.optometristName(), "optometristName", NAME,
+                "must have 3 to 150 letters, no numbers or special characters"));
         LocalDate date = v.check(() -> Validation.pastOrToday(
                 Validation.required(data.formulaDate(), "formulaDate"), "formulaDate", today));
         v.throwIfAny();

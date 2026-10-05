@@ -86,7 +86,7 @@ class JdbcRepositoriesIntegrationTest {
         patients.saveIdempotent(first, key());
         Patient sameDocument = Patient.register(UUID.randomUUID(),
                 new Patient.RegisterData(first.documentType(), first.documentNumber(), "Otra", "Persona", "3001112233",
-                        null, "Sanitas", null, null), TODAY, Instant.now());
+                        null, "EPS Sanitas", null, null), TODAY, Instant.now());
         String lostKey = key();
 
         assertThatThrownBy(() -> patients.saveIdempotent(sameDocument, lostKey)).isInstanceOf(DomainException.class);

@@ -30,13 +30,13 @@ public final class Fixtures {
 
     public static Patient.RegisterData patient(String document) {
         return new Patient.RegisterData(DocumentType.CC, document, "Laura Marcela", "Ortega Ruiz", "3104582291",
-                "laura.ortega@gmail.com", "Sanitas", "Neiva", LocalDate.of(1990, 5, 20));
+                "laura.ortega@gmail.com", "EPS Sanitas", "Neiva", LocalDate.of(1990, 5, 20));
     }
 
     public static OpticalFormula.Data validFormula() {
         return new OpticalFormula.Data(
                 new EyeMeasure(new BigDecimal("-1.50"), new BigDecimal("-0.75"), 90, null),
                 new EyeMeasure(new BigDecimal("-1.25"), null, null, null),
-                new BigDecimal("62.5"), LensType.MONOFOCAL, "Dra. Ana Torres", LocalDate.of(2026, 9, 20));
+                new BigDecimal("62.5"), LensType.MONOFOCAL, "Ana Torres", LocalDate.of(2026, 9, 20));
     }
 }
