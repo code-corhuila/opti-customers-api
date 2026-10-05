@@ -19,6 +19,7 @@ import co.edu.corhuila.opti.customers.adapter.in.http.PatientDtos.AddFormulaRequ
 import co.edu.corhuila.opti.customers.adapter.in.http.PatientDtos.FormulaResponse;
 import co.edu.corhuila.opti.customers.adapter.in.http.PatientDtos.PatientResponse;
 import co.edu.corhuila.opti.customers.adapter.in.http.PatientDtos.RegisterPatientRequest;
+import co.edu.corhuila.opti.customers.adapter.in.http.PatientDtos.SummaryResponse;
 import co.edu.corhuila.opti.customers.adapter.in.http.PatientDtos.UpdateContactRequest;
 import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases;
 import co.edu.corhuila.opti.customers.application.port.in.PatientUseCases.PatientFilter;
@@ -56,6 +57,12 @@ class PatientController {
         RequestRules.onlyParams(http, "q", "status", "controlDueBefore", "page", "limit");
         var filter = new PatientFilter(q, parseStatus(status), parseDate(controlDueBefore, "controlDueBefore"));
         return PageResponse.of(useCases.search(filter, RequestRules.page(page, limit)).map(PatientResponse::from));
+    }
+
+    /** Totals for the patients dashboard (HU-17); same visibility as the listing above. */
+    @GetMapping("/summary")
+    SummaryResponse summary() {
+        return SummaryResponse.from(useCases.summary());
     }
 
     @GetMapping("/{id}")
