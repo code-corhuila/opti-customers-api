@@ -103,6 +103,13 @@ public class PatientService implements PatientUseCases {
     }
 
     @Override
+    public OpticalFormula formula(UUID patientId, UUID formulaId) {
+        get(patientId);
+        return formulas.findById(patientId, formulaId)
+            .orElseThrow(() -> DomainException.notFound("No se encontró la fórmula del paciente"));
+    }
+
+    @Override
     public OpticalFormula currentFormula(UUID patientId) {
         get(patientId);
         return formulas.findCurrent(patientId)
