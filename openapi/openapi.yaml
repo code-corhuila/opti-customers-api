@@ -2,7 +2,8 @@ openapi: 3.0.3
 info:
   title: OptiView customers API
   version: 1.0.0
-  description: Patients and optical formulas. Errors use one envelope; creations are idempotent; listings are bounded.
+  description: Patients and optical formulas. Errors use one envelope; creations are
+    idempotent; listings are bounded.
 servers:
 - url: http://localhost:8000
   description: Through the API gateway (development)
@@ -25,7 +26,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreatedResponse'
         '200':
-          description: 'The Idempotency-Key was already used: the resource created the first time'
+          description: 'The Idempotency-Key was already used: the resource created
+            the first time'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -69,7 +71,8 @@ paths:
         schema:
           type: string
           format: date
-        description: Patients whose last control is older than this date (used by the worker)
+        description: Patients whose last control is older than this date (used by
+          the worker)
       responses:
         '200':
           description: A page of patients
@@ -206,7 +209,8 @@ paths:
       responses:
         '201': *id001
         '200':
-          description: 'The Idempotency-Key was already used: the resource created the first time'
+          description: 'The Idempotency-Key was already used: the resource created
+            the first time'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -296,6 +300,43 @@ paths:
       responses:
         '200':
           description: UP
+  /api/v1/patients/{id}/formulas/{formulaId}/pdf:
+    get:
+      summary: Descargar fórmula óptica vigente o histórica en PDF
+      description: 'ADMIN, SELLER, OPTOMETRIST. La fórmula debe pertenecer al paciente.
+        Attachment privado, Cache-Control: no-store y X-Content-Type-Options: nosniff.
+        Texto paginado WinAnsi, sin firma digital.'
+      tags:
+      - formulas
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: formulaId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: PDF de la fórmula
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     bearerAuth:

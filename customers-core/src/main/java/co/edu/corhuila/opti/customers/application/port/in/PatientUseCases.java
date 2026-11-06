@@ -25,6 +25,8 @@ public interface PatientUseCases {
 
     OpticalFormula currentFormula(UUID patientId);
 
+    OpticalFormula formula(UUID patientId, UUID formulaId);
+
     PageResult<OpticalFormula> formulas(UUID patientId, PageQuery page);
 
     /** Totals for the patients dashboard (HU-17). */
