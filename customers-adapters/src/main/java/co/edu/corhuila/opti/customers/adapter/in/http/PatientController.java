@@ -102,6 +102,26 @@ class PatientController {
                 .map(FormulaResponse::from));
     }
 
+    @GetMapping("/{id}/formulas/{formulaId}/pdf")
+    ResponseEntity<byte[]> formulaPdf(HttpServletRequest http, @PathVariable String id, @PathVariable String formulaId) {
+        RequestRules.requireRole(http, Roles.ADMIN, Roles.SELLER, Roles.OPTOMETRIST);
+        var patientId = RequestRules.uuid(id, "id");
+        var formula = useCases.formula(patientId, RequestRules.uuid(formulaId, "formulaId"));
+        var patient = useCases.get(patientId);
+        return PdfDocument.download("formula-" + formula.id() + ".pdf", java.util.List.of(
+            "OptiView - Fórmula óptica", "Paciente: " + patient.fullName(),
+            "Documento: " + patient.documentType() + " " + patient.documentNumber(),
+            "Fórmula: " + formula.id(), "Fecha: " + formula.formulaDate(),
+            "Estado: " + (formula.current() ? "Vigente" : "Histórica"),
+            "Ojo derecho: " + eye(formula.od()), "Ojo izquierdo: " + eye(formula.oi()),
+            "Distancia pupilar: " + formula.pupillaryDistance() + " mm",
+            "Tipo de lente: " + formula.lensType(), "Optómetra: " + formula.optometristName()));
+    }
+
+    private static String eye(co.edu.corhuila.opti.customers.domain.model.EyeMeasure eye) {
+        return "Esfera " + eye.sphere() + " | Cilindro " + eye.cylinder() + " | Eje " + eye.axis() + " | Adición " + eye.addition();
+    }
+
     @GetMapping("/{id}/formulas/current")
     FormulaResponse currentFormula(@PathVariable String id) {
         return FormulaResponse.from(useCases.currentFormula(RequestRules.uuid(id, "id")));
