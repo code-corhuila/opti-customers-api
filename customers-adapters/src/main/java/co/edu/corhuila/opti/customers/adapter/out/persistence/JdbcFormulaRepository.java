@@ -66,6 +66,12 @@ public class JdbcFormulaRepository implements FormulaRepository {
         return new PageResult<>(rows, page.page(), page.limit(), total);
     }
 
+    @Override
+    public Optional<OpticalFormula> findById(UUID patientId, UUID formulaId) {
+        return jdbc.sql("SELECT " + COLUMNS + " FROM optical_formula WHERE patient_id = :patient AND id = :id")
+            .param("patient", patientId).param("id", formulaId).query(JdbcFormulaRepository::map).optional();
+    }
+
     private Optional<OpticalFormula> findById(UUID id) {
         return jdbc.sql("SELECT " + COLUMNS + " FROM optical_formula WHERE id = :id")
                 .param("id", id).query(JdbcFormulaRepository::map).optional();
