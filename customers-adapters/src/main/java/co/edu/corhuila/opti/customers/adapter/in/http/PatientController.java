@@ -108,18 +108,37 @@ class PatientController {
         var patientId = RequestRules.uuid(id, "id");
         var formula = useCases.formula(patientId, RequestRules.uuid(formulaId, "formulaId"));
         var patient = useCases.get(patientId);
-        return PdfDocument.download("formula-" + formula.id() + ".pdf", java.util.List.of(
-            "OptiView - Fórmula óptica", "Paciente: " + patient.fullName(),
-            "Documento: " + patient.documentType() + " " + patient.documentNumber(),
-            "Fórmula: " + formula.id(), "Fecha: " + formula.formulaDate(),
-            "Estado: " + (formula.current() ? "Vigente" : "Histórica"),
-            "Ojo derecho: " + eye(formula.od()), "Ojo izquierdo: " + eye(formula.oi()),
-            "Distancia pupilar: " + formula.pupillaryDistance() + " mm",
-            "Tipo de lente: " + formula.lensType(), "Optómetra: " + formula.optometristName()));
+        var pdf = new PdfDocument("Fórmula óptica", "Prescripción optométrica  /  Documento clínico");
+        pdf.section("Datos de la consulta");
+        var document = patient.documentType() == co.edu.corhuila.opti.customers.domain.model.DocumentType.PASSPORT
+                ? "Pasaporte" : patient.documentType().name();
+        var date = formula.formulaDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        pdf.fields("Paciente", patient.fullName(), "Documento", document + " " + patient.documentNumber(),
+                "Fecha de la fórmula", date, "Estado", formula.current() ? "Vigente" : "Histórica");
+        pdf.section("Graduación por ojo");
+        pdf.table(new String[]{"Ojo", "Esfera (D)", "Cilindro (D)", "Eje", "Adición (D)"},
+                new int[]{155, 90, 98, 73, 95}, java.util.List.of(
+                        eye("Ojo derecho (OD)", formula.od()), eye("Ojo izquierdo (OI)", formula.oi())));
+        var lens = switch (formula.lensType()) {
+            case MONOFOCAL -> "Monofocal";
+            case BIFOCAL -> "Bifocal";
+            case PROGRESSIVE -> "Progresivo";
+            case OCCUPATIONAL -> "Ocupacional";
+        };
+        pdf.section("Indicaciones de la fórmula");
+        pdf.fields("Distancia pupilar", formula.pupillaryDistance().toPlainString().replace('.', ',') + " mm",
+                "Tipo de lente", lens, "Optómetra", formula.optometristName(), "Referencia", formula.id().toString());
+        pdf.note("Documento de uso clínico. Comparte este archivo únicamente con el paciente o personal autorizado.");
+        return pdf.download("formula-" + formula.id() + ".pdf");
     }
 
-    private static String eye(co.edu.corhuila.opti.customers.domain.model.EyeMeasure eye) {
-        return "Esfera " + eye.sphere() + " | Cilindro " + eye.cylinder() + " | Eje " + eye.axis() + " | Adición " + eye.addition();
+    private static java.util.List<String> eye(String label, co.edu.corhuila.opti.customers.domain.model.EyeMeasure eye) {
+        return java.util.List.of(label, measure(eye.sphere()), measure(eye.cylinder()), eye.axis() + "°", measure(eye.addition()));
+    }
+
+    private static String measure(java.math.BigDecimal value) {
+        if (value == null) return "-";
+        return (value.signum() > 0 ? "+" : "") + value.toPlainString().replace('.', ',');
     }
 
     @GetMapping("/{id}/formulas/current")
