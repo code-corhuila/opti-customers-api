@@ -18,5 +18,7 @@ public interface FormulaRepository {
 
     Optional<OpticalFormula> findCurrent(UUID patientId);
 
+    Optional<OpticalFormula> findById(UUID patientId, UUID formulaId);
+
     PageResult<OpticalFormula> list(UUID patientId, PageQuery page);
 }
