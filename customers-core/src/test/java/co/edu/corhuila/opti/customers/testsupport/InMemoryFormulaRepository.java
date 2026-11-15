@@ -33,6 +33,11 @@ public class InMemoryFormulaRepository implements FormulaRepository {
     }
 
     @Override
+    public Optional<OpticalFormula> findById(UUID patientId, UUID formulaId) {
+        return all.stream().filter(f -> f.patientId().equals(patientId) && f.id().equals(formulaId)).findFirst();
+    }
+
+    @Override
     public Optional<OpticalFormula> findCurrent(UUID patientId) {
         return all.stream().filter(f -> f.patientId().equals(patientId) && f.current()).findFirst();
     }

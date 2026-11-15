@@ -59,3 +59,9 @@ Declared in `customers-app/src/main/resources/application.yml`: header/read time
 ## Depends on
 
 `opti-customers-db` (its own PostgreSQL instance) and the public key of the identity service.
+
+## Descarga de fórmula óptica
+
+`GET /api/v1/patients/{id}/formulas/{formulaId}/pdf` entrega como attachment una fórmula vigente o histórica. ADMIN, SELLER y OPTOMETRIST conservan la visibilidad de las fórmulas existentes; SERVICE y sesiones ausentes no pueden descargar. La consulta SQL exige que fórmula y paciente coincidan. Se incluyen paciente, identificación, fecha, estado, medidas de ambos ojos, DP, lente y optómetra, con `Cache-Control: no-store` y `nosniff`.
+
+PDF de texto paginado, con caracteres españoles (WinAnsi), sin firma digital ni tipografías Unicode completas. `mvn -B verify` ejecuta dominio, HTTP, permisos y PDF; `TEST_DATABASE_URL` sobre PostgreSQL aislado habilita las pruebas JDBC, incluida la consulta de fórmula histórica por paciente. En cloud: 53 tests, sin fallos ni omisiones. No se modifican fórmulas existentes ni el esquema.

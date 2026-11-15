@@ -102,6 +102,45 @@ class PatientController {
                 .map(FormulaResponse::from));
     }
 
+    @GetMapping("/{id}/formulas/{formulaId}/pdf")
+    ResponseEntity<byte[]> formulaPdf(HttpServletRequest http, @PathVariable String id, @PathVariable String formulaId) {
+        RequestRules.requireRole(http, Roles.ADMIN, Roles.SELLER, Roles.OPTOMETRIST);
+        var patientId = RequestRules.uuid(id, "id");
+        var formula = useCases.formula(patientId, RequestRules.uuid(formulaId, "formulaId"));
+        var patient = useCases.get(patientId);
+        var pdf = new PdfDocument("Fórmula óptica", "Prescripción optométrica  /  Documento clínico");
+        pdf.section("Datos de la consulta");
+        var document = patient.documentType() == co.edu.corhuila.opti.customers.domain.model.DocumentType.PASSPORT
+                ? "Pasaporte" : patient.documentType().name();
+        var date = formula.formulaDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        pdf.fields("Paciente", patient.fullName(), "Documento", document + " " + patient.documentNumber(),
+                "Fecha de la fórmula", date, "Estado", formula.current() ? "Vigente" : "Histórica");
+        pdf.section("Graduación por ojo");
+        pdf.table(new String[]{"Ojo", "Esfera (D)", "Cilindro (D)", "Eje", "Adición (D)"},
+                new int[]{155, 90, 98, 73, 95}, java.util.List.of(
+                        eye("Ojo derecho (OD)", formula.od()), eye("Ojo izquierdo (OI)", formula.oi())));
+        var lens = switch (formula.lensType()) {
+            case MONOFOCAL -> "Monofocal";
+            case BIFOCAL -> "Bifocal";
+            case PROGRESSIVE -> "Progresivo";
+            case OCCUPATIONAL -> "Ocupacional";
+        };
+        pdf.section("Indicaciones de la fórmula");
+        pdf.fields("Distancia pupilar", formula.pupillaryDistance().toPlainString().replace('.', ',') + " mm",
+                "Tipo de lente", lens, "Optómetra", formula.optometristName(), "Referencia", formula.id().toString());
+        pdf.note("Documento de uso clínico. Comparte este archivo únicamente con el paciente o personal autorizado.");
+        return pdf.download("formula-" + formula.id() + ".pdf");
+    }
+
+    private static java.util.List<String> eye(String label, co.edu.corhuila.opti.customers.domain.model.EyeMeasure eye) {
+        return java.util.List.of(label, measure(eye.sphere()), measure(eye.cylinder()), eye.axis() + "°", measure(eye.addition()));
+    }
+
+    private static String measure(java.math.BigDecimal value) {
+        if (value == null) return "-";
+        return (value.signum() > 0 ? "+" : "") + value.toPlainString().replace('.', ',');
+    }
+
     @GetMapping("/{id}/formulas/current")
     FormulaResponse currentFormula(@PathVariable String id) {
         return FormulaResponse.from(useCases.currentFormula(RequestRules.uuid(id, "id")));

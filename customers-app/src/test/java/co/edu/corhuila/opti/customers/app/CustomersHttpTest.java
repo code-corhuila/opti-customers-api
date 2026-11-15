@@ -348,6 +348,27 @@ class CustomersHttpTest {
                 .andExpect(jsonPath("$.error").value("NOT_FOUND"));
     }
 
+    @Test
+    void formulaPdfSupportsHistoryAndRejectsWrongPatientOrUnauthorizedRole() throws Exception {
+        String patient = idOf(as(create(patientJson(nextDocument()), "key-" + UUID.randomUUID()), ADMIN)
+            .andReturn().getResponse().getContentAsString());
+        String formulaId = idOf(as(formula(patient, validFormulaJson(), "pdf-" + UUID.randomUUID()), "OPTOMETRIST")
+            .andReturn().getResponse().getContentAsString());
+        as(formula(patient, validFormulaJson(), "pdf-" + UUID.randomUUID()), "OPTOMETRIST").andExpect(status().isCreated());
+        String url = "/api/v1/patients/" + patient + "/formulas/" + formulaId + "/pdf";
+        for (String role : java.util.List.of("ADMIN", "SELLER", "OPTOMETRIST")) {
+            var pdf = as(get(url), role).andExpect(status().isOk()).andExpect(header().string("Content-Type", "application/pdf"))
+                .andExpect(header().string("Cache-Control", "no-store")).andReturn().getResponse().getContentAsByteArray();
+            org.assertj.core.api.Assertions.assertThat(new String(pdf, java.nio.charset.Charset.forName("windows-1252")))
+                .contains("Histórica", "Ojo derecho", "Distancia pupilar");
+        }
+        mvc.perform(get(url)).andExpect(status().isUnauthorized());
+        as(get(url), "SERVICE").andExpect(status().isForbidden());
+        String other = idOf(as(create(patientJson(nextDocument()), "key-" + UUID.randomUUID()), ADMIN)
+            .andReturn().getResponse().getContentAsString());
+        as(get("/api/v1/patients/" + other + "/formulas/" + formulaId + "/pdf"), ADMIN).andExpect(status().isNotFound());
+    }
+
     // ---- helpers --------------------------------------------------------------------------
 
     private ResultActions as(MockHttpServletRequestBuilder request, String... roles) throws Exception {

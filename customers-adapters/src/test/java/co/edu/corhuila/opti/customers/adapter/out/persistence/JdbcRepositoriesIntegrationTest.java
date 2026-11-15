@@ -139,6 +139,8 @@ class JdbcRepositoriesIntegrationTest {
         formulas.saveAsCurrent(second, key());
 
         assertThat(formulas.findCurrent(p.id())).map(OpticalFormula::id).contains(second.id());
+        assertThat(formulas.findById(p.id(), first.id())).map(OpticalFormula::id).contains(first.id());
+        assertThat(formulas.findById(UUID.randomUUID(), first.id())).isEmpty();
         var history = formulas.list(p.id(), PageQuery.first(10));
         assertThat(history.total()).isEqualTo(2);
         assertThat(history.data()).filteredOn(OpticalFormula::current).hasSize(1);
